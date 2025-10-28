@@ -1,6 +1,6 @@
 data:
-  train_files: QuintenWu/PMC_VQA_orig@train
-  val_files: QuintenWu/PMC_VQA_orig@validation
+  train_files: QuintenWu/Mixed_Closed_Plus_Our_PMC@train
+  val_files: QuintenWu/Mixed_Closed_Plus_Our_PMC@validation
   prompt_key: question
   answer_key: answer
   image_key: images
@@ -81,13 +81,13 @@ worker:
 
   reward:
     reward_type: batch
-    reward_function: ./mine/RL_only/settings/mcq_only/reward_function/rl_only_plus_mcq_only.py:compute_score
+    reward_function: ./mine/RL_only/settings/mixed_closed/reward_function/rl_only_plus_mixed_closed.py:compute_score
 
 trainer:
   total_epochs: 15
   max_steps: null
   project_name: EasyR1
-  experiment_name: qwen2_5_vl_7b_rl_only_plus_mcq_only_grpo
+  experiment_name: qwen2_5_vl_7b_rl_only_plus_mixed_closed_grpo
   logger: ["file", "wandb"]
   nnodes: 1
   n_gpus_per_node: 8

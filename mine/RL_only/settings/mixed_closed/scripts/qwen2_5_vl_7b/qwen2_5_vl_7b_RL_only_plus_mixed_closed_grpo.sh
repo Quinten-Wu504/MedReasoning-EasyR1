@@ -15,8 +15,8 @@ MODEL_PATH=Qwen/Qwen2.5-VL-7B-Instruct
 
 python3 -m verl.trainer.main \
     config=mine/RL_only/settings/mixed_closed/scripts/qwen2_5_vl_7b/config.yaml \
-    data.train_files=QuintenWu/PMC_VQA_orig@train \
-    data.val_files=QuintenWu/PMC_VQA_orig@validation \
+    data.train_files=QuintenWu/Mixed_Closed_Plus_Our_PMC@train \
+    data.val_files=QuintenWu/Mixed_Closed_Plus_Our_PMC@validation \
     data.rollout_batch_size=256 \
     worker.actor.model.model_path=${MODEL_PATH} \
     worker.rollout.limit_images=0 \

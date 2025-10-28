@@ -4,23 +4,25 @@
 import re
 from typing import Any, List, Dict
 
-def extract_answer_content(response: str) -> str:
+def format_reward(response: str, ground_truth: str) -> float:
     """
-    Extract the content within <answer> tags, removing leading/trailing whitespace and newlines.
+    Check if the response follows the expected format.
+    - For multiple-choice questions (ground_truth starts with 'A:'-'F:'), check if response matches ^[A-F]:\s*\S.*$
+    - For closed-end questions, default to 1.0
     """
-    pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
-    match = pattern.search(response)
-    if match:
-        return match.group(1).strip()
-    return ""
+    # Normalize ground truth
+    ground_truth_clean = re.sub(r"^[ \n]+|[ \n]+$", "", ground_truth).strip()
 
-def format_reward(response: str) -> float:
-    """
-    Check if the response follows the expected <think>...</think><answer>...</answer> format.
-    """
-    pattern = re.compile(r"<think>.*?</think>\s*<answer>.*?</answer>", re.DOTALL)
-    format_match = re.fullmatch(pattern, response.strip())
-    return 1.0 if format_match else 0.0
+    mcq_pattern = re.compile(r"^[A-F]:\s*")
+    if mcq_pattern.match(ground_truth_clean):
+        # MCQ format check for response
+        response_clean = re.sub(r"^[ \n]+|[ \n]+$", "", response).strip()
+        pattern = re.compile(r"^[A-F]:\s*\S.*$", re.DOTALL)
+        format_match = re.fullmatch(pattern, response_clean)
+        return 1.0 if format_match else 0.0
+    else:
+        # Closed-end: default full score
+        return 1.0
 
 def accuracy_reward(response: str, ground_truth: str) -> float:
     """
@@ -28,22 +30,18 @@ def accuracy_reward(response: str, ground_truth: str) -> float:
     - For multiple-choice questions (starting with 'A:', 'B:', etc.), match both the option letter and content.
     - For closed-end questions, match the full answer, ignoring leading/trailing spaces, newlines, and punctuation.
     """
-    answer = extract_answer_content(response)
-    if not answer:
-        return 0.0
-
-    # Normalize ground truth and answer by removing leading/trailing spaces, newlines, and trailing punctuation
+    # Normalize ground truth and response by removing leading/trailing spaces, newlines, and trailing punctuation
     ground_truth_clean = re.sub(r"^[ \n]+|[ \n]+$", "", ground_truth)
-    ground_truth_clean = re.sub(r"[.,:;?!]$", "", ground_truth_clean)
-    answer_clean = re.sub(r"^[ \n]+|[ \n]+$", "", answer)
-    answer_clean = re.sub(r"[.,:;?!]$", "", answer_clean)
+    ground_truth_clean = re.sub(r"[.,:;?!]$", "", ground_truth_clean).strip()
+    response_clean = re.sub(r"^[ \n]+|[ \n]+$", "", response)
+    response_clean = re.sub(r"[.,:;?!]$", "", response_clean).strip()
 
     # Check if it's a multiple-choice question (starts with 'A:', 'B:', etc.)
-    mcq_pattern = re.compile(r"^[A-D]:\s*")
+    mcq_pattern = re.compile(r"^[A-F]:\s*")
     if mcq_pattern.match(ground_truth_clean):
         # Extract option letter and content
-        gt_parts = re.match(r"^([A-D]):\s*(.*)", ground_truth_clean)
-        ans_parts = re.match(r"^([A-D]):\s*(.*)", answer_clean)
+        gt_parts = re.match(r"^([A-F]):\s*(.*)", ground_truth_clean)
+        ans_parts = re.match(r"^([A-F]):\s*(.*)", response_clean)
         
         if not gt_parts or not ans_parts:
             return 0.0
@@ -58,7 +56,7 @@ def accuracy_reward(response: str, ground_truth: str) -> float:
         return 1.0 if gt_letter == ans_letter and gt_content_clean == ans_content_clean else 0.0
     else:
         # Closed-end question: exact match ignoring spaces, newlines, and punctuation
-        return 1.0 if ground_truth_clean == answer_clean else 0.0
+        return 1.0 if ground_truth_clean.lower() == response_clean.lower() else 0.0  # Case-insensitive for closed-end
 
 def compute_score(reward_inputs: List[Dict[str, Any]], format_weight: float = 0.1) -> List[Dict[str, float]]:
     """
@@ -71,10 +69,10 @@ def compute_score(reward_inputs: List[Dict[str, Any]], format_weight: float = 0.
 
     scores = []
     for reward_input in reward_inputs:
-        response = re.sub(r"\s*(<|>|/)\s*", r"\1", reward_input["response"])  # Normalize tag spacing
+        response = reward_input["response"]
         ground_truth = reward_input["ground_truth"]
         
-        format_score = format_reward(response)
+        format_score = format_reward(response, ground_truth)
         accuracy_score = accuracy_reward(response, ground_truth)
         
         scores.append({
@@ -90,23 +88,31 @@ if __name__ == "__main__":
     # Example usage for testing
     test_inputs = [
         {
-            "response": "<think>Reasoning here</think><answer>C: The appressorium</answer>",
+            "response": "C: The appressorium",
             "ground_truth": "C: The appressorium"
         },
         {
-            "response": "<think>Reasoning here</think><answer>\n\nC:The appressorium,\n\n</answer>",
+            "response": "C:The appressorium,",
             "ground_truth": "C: The appressorium."
         },
         {
-            "response": "<think>Reasoning here</think><answer>Normal</answer>",
+            "response": "Normal",
             "ground_truth": "Normal."
         },
         {
-            "response": "<think>Reasoning here</think><answer>B: Incorrect</answer>",
+            "response": "B: Incorrect",
             "ground_truth": "C: The appressorium"
         },
         {
-            "response": "<answer>C: The appressorium</answer>",  # Invalid format
+            "response": "C: The appressorium",
+            "ground_truth": "C: The appressorium"
+        },
+        {
+            "response": "The appressorium",
+            "ground_truth": "C: The appressorium"
+        },
+        {
+            "response": "C",
             "ground_truth": "C: The appressorium"
         }
     ]

@@ -1,23 +1,21 @@
 data:
-  train_files: QuintenWu/mixed_mcq_filtered_pmc@train
-  val_files: QuintenWu/mixed_mcq_filtered_pmc@validation
-  prompt_key: problem
+  train_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@train
+  val_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@validation
+  prompt_key: question
   answer_key: answer
   image_key: images
-  video_key: videos
   image_dir: null
-  video_fps: 2.0
   max_prompt_length: 2048
   max_response_length: 2048
-  rollout_batch_size: 128  # equivalent to verl's data.train_batch_size
+  rollout_batch_size: 256  # equivalent to verl's data.train_batch_size
   mini_rollout_batch_size: null  # equivalent to verl's data.gen_batch_size
   val_batch_size: 1024
-  format_prompt: ./mine/prompt/medreason.jinja
+  format_prompt: ./mine/SFT_plus_RL/prompt/medreason.jinja
   override_chat_template: null
   shuffle: true
   seed: 1
-  min_pixels: 112
-  max_pixels: 5304750
+  min_pixels: 120
+  max_pixels: 8904308
   filter_overlong_prompts: true
 
 algorithm:
@@ -33,15 +31,15 @@ algorithm:
 
 worker:
   actor:
-    global_batch_size: 128  # equivalent to verl's actor.ppo_mini_batch_size
-    micro_batch_size_per_device_for_update: 1  # equivalent to verl's actor.ppo_micro_batch_size_per_gpu
-    micro_batch_size_per_device_for_experience: 2  # equivalent to verl's rollout.log_prob_micro_batch_size_per_gpu
+    global_batch_size: 256  # equivalent to verl's actor.ppo_mini_batch_size
+    micro_batch_size_per_device_for_update: 2  # equivalent to verl's actor.ppo_micro_batch_size_per_gpu
+    micro_batch_size_per_device_for_experience: 4  # equivalent to verl's rollout.log_prob_micro_batch_size_per_gpu
     max_grad_norm: 1.0
     padding_free: true
     dynamic_batching: true
     ulysses_size: 1
     model:
-      model_path: Qwen/Qwen2.5-7B-Instruct
+      model_path: QuintenWu/MultiModal_MedReasoning_Qwen2_5_VL_MCQ_Only_No_Path_1e_5
       enable_gradient_checkpointing: true
       trust_remote_code: false
       freeze_vision_tower: false
@@ -63,10 +61,10 @@ worker:
     temperature: 1.0
     top_p: 1.0
     limit_images: 0
-    gpu_memory_utilization: 0.6
+    gpu_memory_utilization: 0.85
     enforce_eager: false
     enable_chunked_prefill: false
-    tensor_parallel_size: 2
+    tensor_parallel_size: 4
     disable_tqdm: false
     val_override_config:
       temperature: 0.6
@@ -83,13 +81,13 @@ worker:
 
   reward:
     reward_type: batch
-    reward_function: ./mine/reward_function/mixed_mcq_filtered_pmc.py:compute_score
+    reward_function: ./mine/SFT_plus_RL/settings/mixed_mcq/reward_function/sft_plus_rl_plus_mixed_mcq.py:compute_score
 
 trainer:
   total_epochs: 15
   max_steps: null
-  project_name: easy_r1
-  experiment_name: qwen2_5_vl_7b_medreason_grpo
+  project_name: EasyR1
+  experiment_name: qwen2_5_vl_7b_sft_plus_rl_plus_mixed_mcq_grpo
   logger: ["file", "wandb"]
   nnodes: 1
   n_gpus_per_node: 8

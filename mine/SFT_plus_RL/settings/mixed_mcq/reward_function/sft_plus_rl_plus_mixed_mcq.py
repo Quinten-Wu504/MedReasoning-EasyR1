@@ -98,8 +98,16 @@ if __name__ == "__main__":
             "ground_truth": "C: The appressorium."
         },
         {
+            "response": "<think>Reasoning here</think><answer>B: The appressorium</answer>",
+            "ground_truth": "C: The appressorium"
+        },
+        {
             "response": "<think>Reasoning here</think><answer>Normal</answer>",
             "ground_truth": "Normal."
+        },
+        {
+            "response": "<think>Reasoning here</think><answer>Normal</answer>",
+            "ground_truth": "B: Normal."
         },
         {
             "response": "<think>Reasoning here</think><answer>B: Incorrect</answer>",

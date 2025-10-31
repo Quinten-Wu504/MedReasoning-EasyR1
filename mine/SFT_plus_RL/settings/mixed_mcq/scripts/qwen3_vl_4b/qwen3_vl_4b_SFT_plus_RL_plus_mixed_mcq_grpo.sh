@@ -15,8 +15,8 @@ MODEL_PATH=Qwen/Qwen3-VL-4B-Instruct
 
 python3 -m verl.trainer.main \
     config=mine/SFT_plus_RL/settings/mixed_mcq/scripts/qwen3_vl_4b/config.yaml \
-    data.train_files=QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@train \
-    data.val_files=QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@validation \
+    data.train_files=QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC_New_Image_Tag@train \
+    data.val_files=QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC_New_Image_Tag@validation \
     data.rollout_batch_size=256 \
     worker.actor.model.model_path=${MODEL_PATH} \
     worker.rollout.limit_images=0 \

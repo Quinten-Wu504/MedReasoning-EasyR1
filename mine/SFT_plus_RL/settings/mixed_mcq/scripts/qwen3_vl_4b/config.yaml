@@ -1,6 +1,6 @@
 data:
-  train_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@train
-  val_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC@validation
+  train_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC_New_Image_Tag@train
+  val_files: QuintenWu/RL_Mixed_MCQ_Filtered_Our_PMC_New_Image_Tag@validation
   prompt_key: question
   answer_key: answer
   image_key: images
